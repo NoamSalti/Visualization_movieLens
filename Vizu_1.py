@@ -322,7 +322,7 @@ else:
 
     zip_set = set(subset_zip["Zip-code"].astype(str))
     
-    # 2. חישוב המפתח הנכון
+    # 2. חישוב המפתח הנכון ב-JSON
     sample_feature = zcta_geojson["features"][0]["properties"]
     feature_key = ZCTA_KEY 
     if ZCTA_KEY not in sample_feature:
@@ -367,39 +367,27 @@ else:
             "<extra></extra>"
         )
 
-    # --- שכבה 1: המיקודים הצבעוניים (הנתונים עצמם) ---
+    # --- שכבה יחידה: המיקודים הצבעוניים (הנתונים) ---
     fig.add_trace(go.Choropleth(
         geojson=filtered_geojson,
         locations=subset_zip["Zip-code"],
         featureidkey=f"properties.{feature_key}",
         z=subset_zip[col],
-        colorscale=colorscale, # כאן משתמשים בצבעים האמיתיים (אדום/ירוק/כחול)
+        colorscale=colorscale,
         zmin=zmin, zmax=zmax,
-        marker_line_width=0,   # ללא קו מתאר לכל מיקוד (נראה נקי יותר)
+        marker_line_width=0, # ללא קו מתאר למיקודים עצמם
         colorbar_title=metric_title,
         customdata=subset_zip[["Rating_Count", "Avg_Rating", "Weighted_Score", "Delta_fmt"]],
         hovertemplate=hovertemplate_zip,
     ))
 
-    # --- שכבה 2: קו המתאר של המדינה (המסגרת השחורה) ---
-    # כאן אנחנו עושים את הטריק של השקיפות
-    fig.add_trace(go.Choropleth(
-        locations=[state_code],
-        z=[1],
-        locationmode="USA-states",
-        # זה הטריק: מגדירים סקאלת צבעים שכולה שקופה
-        colorscale=[[0, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,0)']],
-        showscale=False,       # לא להראות את סרגל הצבעים של המסגרת
-        marker_line_color='black', # צבע המסגרת
-        marker_line_width=2,       # עובי המסגרת
-        hoverinfo="skip"
-    ))
-
+    # הסרנו מכאן את ה-Trace השני שעשה את הבעיות!
+    
     fig.update_layout(
         geo=dict(
             scope="usa",
             projection_type="albers usa",
-            fitbounds="locations",
+            fitbounds="locations", # זה ידאג שהמפה תתמקד בול על המיקודים שיש לנו
             visible=True,
             bgcolor="rgba(0,0,0,0)"
         ),
