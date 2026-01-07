@@ -320,6 +320,13 @@ else:
         st.stop()
 
     zip_set = set(subset_zip["Zip-code"].astype(str))
+    sample_feature = zcta_geojson["features"][0]["properties"]
+    feature_key = ZCTA_KEY 
+    if ZCTA_KEY not in sample_feature:
+        for k in sample_feature.keys():
+            if "ZCTA" in k or "zip" in k.lower():
+                feature_key = k
+                break
     filtered_geojson = {
         "type": "FeatureCollection",
         "features": [
@@ -327,6 +334,9 @@ else:
             if str(feat["properties"].get(ZCTA_KEY, "")).zfill(5) in zip_set
         ]
     }
+    if not filtered_geojson["features"]:
+        st.error(f"Error: Data mismatch. We have data for {len(subset_zip)} ZIPs, but none matched the Map file.")
+        st.stop()
 
     fig = go.Figure()
 
@@ -372,6 +382,7 @@ else:
         showscale=False,
         marker_line_color="black",
         marker_line_width=3,
+        marker_opacity=0,
         hoverinfo="skip"
     ))
 
@@ -388,6 +399,7 @@ else:
 
     st.subheader(f"{state_code} — ZIP-level view")
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
