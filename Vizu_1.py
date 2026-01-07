@@ -28,8 +28,8 @@ def calculate_weighted_rating(df, m=None):
 @st.cache_data
 def load_data():
     df = pd.read_csv("usa_ratings_lite.csv", low_memory=False)
-
-    usa_df = df[df["Country"].str.contains("United Sta|USA", case=False, na=False)].copy()
+    
+    usa_df = df.copy()
 
     nomi = pgeocode.Nominatim("us")
     usa_df["Zip-code"] = usa_df["Zip-code"].astype(str).str.split("-").str[0].str.strip()
@@ -38,8 +38,10 @@ def load_data():
     geo_data = nomi.query_postal_code(unique_zips)
     geo_data = geo_data.dropna(subset=["latitude", "longitude", "state_code"])
 
-    geo_info = geo_data[["postal_code", "latitude", "longitude", "place_name", "state_code"]].copy()
-    geo_info.columns = ["Zip-code", "lat", "lon", "City_Name", "State_Code"]
+    geo_info = geo_data[["postal_code", "latitude", "longitude", "place_name", "state_code", "state_name"]].copy()
+    
+    geo_info.columns = ["Zip-code", "lat", "lon", "City_Name", "State_Code", "State"]
+    
     geo_info["State_Code"] = geo_info["State_Code"].astype(str).str.upper()
 
     merged = pd.merge(usa_df, geo_info, on="Zip-code", how="inner")
@@ -386,6 +388,7 @@ else:
 
     st.subheader(f"{state_code} — ZIP-level view")
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
