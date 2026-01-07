@@ -27,7 +27,7 @@ def calculate_weighted_rating(df, m=None):
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv("final_project_data_ready.csv", low_memory=False)
+    df = pd.read_csv("usa_ratings_lite.csv", low_memory=False)
 
     usa_df = df[df["Country"].str.contains("United Sta|USA", case=False, na=False)].copy()
 
@@ -386,4 +386,5 @@ else:
 
     st.subheader(f"{state_code} — ZIP-level view")
     st.plotly_chart(fig, use_container_width=True)
+
 
