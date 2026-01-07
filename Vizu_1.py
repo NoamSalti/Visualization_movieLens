@@ -331,7 +331,7 @@ else:
         "type": "FeatureCollection",
         "features": [
             feat for feat in zcta_geojson["features"]
-            if str(feat["properties"].get(ZCTA_KEY, "")).zfill(5) in zip_set
+            if str(feat["properties"].get(feature_key, "")).zfill(5) in zip_set
         ]
     }
     if not filtered_geojson["features"]:
@@ -363,7 +363,7 @@ else:
     fig.add_trace(go.Choropleth(
         geojson=filtered_geojson,
         locations=subset_zip["Zip-code"],
-        featureidkey=f"properties.{ZCTA_KEY}",
+        featureidkey=f"properties.{feature_key}",
         z=subset_zip[col],
         colorscale=colorscale,
         zmin=zmin, zmax=zmax,
@@ -380,6 +380,10 @@ else:
         locationmode="USA-states",
         colorscale=[[0, "rgba(0,0,0,0)"], [1, "rgba(0,0,0,0)"]],
         showscale=False,
+        marker=dict(
+            line=dict(color="black", width=3),
+            opacity=0  # זה מעלים את המילוי אבל משאיר את הקו
+        ),
         marker_line_color="black",
         marker_line_width=3,
         marker_opacity=0,
@@ -391,7 +395,8 @@ else:
             scope="usa",
             projection_type="albers usa",
             fitbounds="locations",
-            visible=True
+            visible=True,
+            bgcolor="rgba(0,0,0,0)"
         ),
         margin={"r": 0, "t": 10, "l": 0, "b": 0},
         height=650
@@ -399,6 +404,7 @@ else:
 
     st.subheader(f"{state_code} — ZIP-level view")
     st.plotly_chart(fig, use_container_width=True)
+
 
 
 
