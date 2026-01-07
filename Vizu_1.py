@@ -314,12 +314,15 @@ if st.session_state.selected_state == "All USA":
 else:
     state_code = st.session_state.selected_state
 
+    # 1. סינון נתונים
     subset_zip = zip_stats[(zip_stats["State_Code"] == state_code) & (zip_stats["Rating_Count"] >= min_zip_votes)].copy()
     if subset_zip.empty:
         st.warning(f"No ZIP areas found for {state_code} after applying Min ZIP votes.")
         st.stop()
 
     zip_set = set(subset_zip["Zip-code"].astype(str))
+    
+    # 2. חישוב המפתח הנכון
     sample_feature = zcta_geojson["features"][0]["properties"]
     feature_key = ZCTA_KEY 
     if ZCTA_KEY not in sample_feature:
@@ -327,6 +330,8 @@ else:
             if "ZCTA" in k or "zip" in k.lower():
                 feature_key = k
                 break
+    
+    # 3. יצירת ה-GeoJSON המסונן
     filtered_geojson = {
         "type": "FeatureCollection",
         "features": [
@@ -334,12 +339,14 @@ else:
             if str(feat["properties"].get(feature_key, "")).zfill(5) in zip_set
         ]
     }
+    
     if not filtered_geojson["features"]:
         st.error(f"Error: Data mismatch. We have data for {len(subset_zip)} ZIPs, but none matched the Map file.")
         st.stop()
 
     fig = go.Figure()
 
+    # הגדרת הטקסט המרחף
     if metric_mode == "Number of Ratings":
         hovertemplate_zip = (
             "<b>ZIP: %{location}</b><br>"
@@ -360,33 +367,31 @@ else:
             "<extra></extra>"
         )
 
+    # --- שכבה 1: המיקודים הצבעוניים (הנתונים עצמם) ---
     fig.add_trace(go.Choropleth(
         geojson=filtered_geojson,
         locations=subset_zip["Zip-code"],
         featureidkey=f"properties.{feature_key}",
         z=subset_zip[col],
-        colorscale=colorscale,
+        colorscale=colorscale, # כאן משתמשים בצבעים האמיתיים (אדום/ירוק/כחול)
         zmin=zmin, zmax=zmax,
-        marker_line_width=0.2,
+        marker_line_width=0,   # ללא קו מתאר לכל מיקוד (נראה נקי יותר)
         colorbar_title=metric_title,
         customdata=subset_zip[["Rating_Count", "Avg_Rating", "Weighted_Score", "Delta_fmt"]],
         hovertemplate=hovertemplate_zip,
     ))
 
-    # State OUTLINE overlay
+    # --- שכבה 2: קו המתאר של המדינה (המסגרת השחורה) ---
+    # כאן אנחנו עושים את הטריק של השקיפות
     fig.add_trace(go.Choropleth(
         locations=[state_code],
         z=[1],
         locationmode="USA-states",
-        colorscale=[[0, "rgba(0,0,0,0)"], [1, "rgba(0,0,0,0)"]],
-        showscale=False,
-        marker=dict(
-            line=dict(color="black", width=3),
-            opacity=0  # זה מעלים את המילוי אבל משאיר את הקו
-        ),
-        marker_line_color="black",
-        marker_line_width=3,
-        marker_opacity=0,
+        # זה הטריק: מגדירים סקאלת צבעים שכולה שקופה
+        colorscale=[[0, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,0)']],
+        showscale=False,       # לא להראות את סרגל הצבעים של המסגרת
+        marker_line_color='black', # צבע המסגרת
+        marker_line_width=2,       # עובי המסגרת
         hoverinfo="skip"
     ))
 
@@ -404,6 +409,8 @@ else:
 
     st.subheader(f"{state_code} — ZIP-level view")
     st.plotly_chart(fig, use_container_width=True)
+    
+    )
 
 
 
