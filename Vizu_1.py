@@ -47,7 +47,7 @@ def load_data():
 
 @st.cache_data
 def load_zcta_geojson():
-    geojson_path = r"zcta.geojson"
+    geojson_path = r"zcta.geojson.json"
     with open(geojson_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -386,5 +386,6 @@ else:
 
     st.subheader(f"{state_code} — ZIP-level view")
     st.plotly_chart(fig, use_container_width=True)
+
 
 
